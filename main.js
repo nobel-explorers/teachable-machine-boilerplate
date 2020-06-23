@@ -35,13 +35,28 @@ class Main {
     // Initiate deeplearn.js math and knn classifier objects
     this.bindPage();
 
+    const input = document.createElement('div');
+    document.body.appendChild(input);
+
     // Create video element that will contain the webcam image
     this.video = document.createElement('video');
     this.video.setAttribute('autoplay', '');
     this.video.setAttribute('playsinline', '');
 
     // Add video element to DOM
-    document.body.appendChild(this.video);
+    input.appendChild(this.video);
+
+    this.imgUpload =document.createElement('input');
+    this.imgUpload.setAttribute("type", "file");
+    this.imgUpload.setAttribute("accept", "image/*");
+
+    //add file input to DOM
+    input.appendChild(this.imgUpload);
+
+    const predict = document.createElement('button');
+    predict.innerText = "Predict";
+    document.body.appendChild(predict);
+
 
     // Create training buttons and info texts    
     for (let i = 0; i < NUM_CLASSES; i++) {
