@@ -100,16 +100,16 @@ class Main {
     await this.webcam.setup(); // request access to the webcam
     document.body.appendChild(this.webcam.canvas);
     this.webcam.play();
-    requestAnimationFrame(loop);
+    requestAnimationFrame(this.loop.bind(this));
     
   }
 
 
   async loop(){
     // update the webcam frame
-    webcam.update();
+    this.webcam.update();
     // Get image data from video element
-    const image = tf.fromPixels(webcam.canvas);
+    const image = tf.fromPixels(this.webcam.canvas);
 
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.
@@ -124,7 +124,7 @@ class Main {
     }
 
     // then call loop again
-    window.requestAnimationFrame(loop);
+    requestAnimationFrame(this.loop.bind(this));
   }
 
   async animate() {
