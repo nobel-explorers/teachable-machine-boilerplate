@@ -82,7 +82,7 @@ var Main = function () {
 
     // Create training buttons and info texts    
 
-    var _loop2 = function _loop2(i) {
+    var _loop = function _loop(i) {
       var div = document.createElement('div');
       document.body.appendChild(div);
       div.style.marginBottom = '10px';
@@ -108,7 +108,7 @@ var Main = function () {
     };
 
     for (var i = 0; i < NUM_CLASSES; i++) {
-      _loop2(i);
+      _loop(i);
     }
   }
 
@@ -147,7 +147,7 @@ var Main = function () {
               // request access to the webcam
               document.body.appendChild(this.webcam.canvas);
               this.webcam.play();
-              requestAnimationFrame(loop);
+              requestAnimationFrame(this.loop.bind(this));
 
             case 5:
             case 'end':
@@ -158,28 +158,18 @@ var Main = function () {
     }
   }, {
     key: 'loop',
-    value: function (_loop) {
-      function loop() {
-        return _loop.apply(this, arguments);
-      }
-
-      loop.toString = function () {
-        return _loop.toString();
-      };
-
-      return loop;
-    }(function _callee() {
+    value: function loop() {
       var _this2 = this;
 
       var image, logits, infer;
-      return regeneratorRuntime.async(function _callee$(_context3) {
+      return regeneratorRuntime.async(function loop$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
             case 0:
               // update the webcam frame
-              webcam.update();
+              this.webcam.update();
               // Get image data from video element
-              image = tf.fromPixels(webcam.canvas);
+              image = tf.fromPixels(this.webcam.canvas);
               logits = void 0;
               // 'conv_preds' is the logits activation of MobileNet.
 
@@ -198,7 +188,7 @@ var Main = function () {
               }
 
               // then call loop again
-              window.requestAnimationFrame(loop);
+              requestAnimationFrame(this.loop.bind(this));
 
             case 6:
             case 'end':
@@ -206,7 +196,7 @@ var Main = function () {
           }
         }
       }, null, this);
-    })
+    }
   }, {
     key: 'animate',
     value: function animate() {
