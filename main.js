@@ -15,6 +15,7 @@
 import "@babel/polyfill";
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
+import * as tmImage from '@teachablemachine/image';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
 
 // Number of classes to classify
@@ -30,21 +31,24 @@ class Main {
     // Initiate variables
     this.infoTexts = [];
     this.training = -1; // -1 when no class is being trained
-    this.videoPlaying = false;
 
     // Initiate deeplearn.js math and knn classifier objects
     this.bindPage();
 
+    // this function from the tmImage library returns a video element that
+    // shows a video feed from the webcam
+    this.webcam = new tmImage.Webcam(200, 200, true); //width, height, flipped
+
+    this.webcamSetup();
+
+    
+
     const input = document.createElement('div');
     document.body.appendChild(input);
-
-    // Create video element that will contain the webcam image
-    this.video = document.createElement('video');
-    this.video.setAttribute('autoplay', '');
-    this.video.setAttribute('playsinline', '');
-
-    // Add video element to DOM
-    input.appendChild(this.video);
+    
+    // add the video element to the page
+   
+    
 
     this.imgUpload =document.createElement('input');
     this.imgUpload.setAttribute("type", "file");
@@ -81,42 +85,51 @@ class Main {
     }
 
 
-    // Setup webcam
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-      .then((stream) => {
-        this.video.srcObject = stream;
-        this.video.width = IMAGE_SIZE;
-        this.video.height = IMAGE_SIZE;
+   
 
-        this.video.addEventListener('playing', () => this.videoPlaying = true);
-        this.video.addEventListener('paused', () => this.videoPlaying = false);
-      })
   }
 
   async bindPage() {
     this.knn = knnClassifier.create();
     this.mobilenet = await mobilenetModule.load();
 
-    this.start();
   }
 
-  start() {
-    if (this.timer) {
-      this.stop();
+  async webcamSetup(){
+
+    await this.webcam.setup(); // request access to the webcam
+    document.body.appendChild(this.webcam.canvas);
+    this.webcam.play();
+    requestAnimationFrame(loop);
+    
+  }
+
+
+  async loop(){
+    // update the webcam frame
+    webcam.update();
+    // Get image data from video element
+    const image = tf.fromPixels(webcam.canvas);
+
+    let logits;
+    // 'conv_preds' is the logits activation of MobileNet.
+    const infer = () => this.mobilenet.infer(image, 'conv_preds');
+
+    // Train class if one of the buttons is held down
+    if (this.training != -1) {
+      logits = infer();
+
+      // Add current image to classifier
+      this.knn.addExample(logits, this.training)
     }
-    this.video.play();
-    this.timer = requestAnimationFrame(this.animate.bind(this));
-  }
 
-  stop() {
-    this.video.pause();
-    cancelAnimationFrame(this.timer);
+    // then call loop again
+    window.requestAnimationFrame(loop);
   }
 
   async animate() {
-    if (this.videoPlaying) {
       // Get image data from video element
-      const image = tf.fromPixels(this.video);
+      const image = tf.fromPixels(webcam.canvas);
 
       let logits;
       // 'conv_preds' is the logits activation of MobileNet.
@@ -161,8 +174,7 @@ class Main {
       if (logits != null) {
         logits.dispose();
       }
-    }
-    this.timer = requestAnimationFrame(this.animate.bind(this));
+    
   }
 }
 
