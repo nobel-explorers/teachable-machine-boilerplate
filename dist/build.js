@@ -19,7 +19,7 @@ require('@babel/polyfill');
 
 var _mobilenet = require('@tensorflow-models/mobilenet');
 
-var mobilenetModule = _interopRequireWildcard(_mobilenet);
+var mobilenet = _interopRequireWildcard(_mobilenet);
 
 var _tfjs = require('@tensorflow/tfjs');
 
@@ -79,6 +79,9 @@ var Main = function () {
     var predict = document.createElement('button');
     predict.innerText = "Predict";
     document.body.appendChild(predict);
+    this.predText = document.createElement('span');
+    predText.innerText = " No Prediction";
+    div.appendChild(predText);
 
     // Create training buttons and info texts    
 
@@ -121,7 +124,7 @@ var Main = function () {
             case 0:
               this.knn = knnClassifier.create();
               _context.next = 3;
-              return regeneratorRuntime.awrap(mobilenetModule.load());
+              return regeneratorRuntime.awrap(mobilenet.load());
 
             case 3:
               this.mobilenet = _context.sent;
@@ -159,9 +162,6 @@ var Main = function () {
   }, {
     key: 'loop',
     value: function loop() {
-      var _this2 = this;
-
-      var image, logits, infer;
       return regeneratorRuntime.async(function loop$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
@@ -169,6 +169,36 @@ var Main = function () {
               // update the webcam frame
               this.webcam.update();
               // Get image data from video element
+
+              if (!(this.training != -1)) {
+                _context3.next = 4;
+                break;
+              }
+
+              _context3.next = 4;
+              return regeneratorRuntime.awrap(this.train(this.training));
+
+            case 4:
+              // then call loop again
+              requestAnimationFrame(this.loop.bind(this));
+
+            case 5:
+            case 'end':
+              return _context3.stop();
+          }
+        }
+      }, null, this);
+    }
+  }, {
+    key: 'train',
+    value: function train(i) {
+      var _this2 = this;
+
+      var image, logits, infer, exampleCount;
+      return regeneratorRuntime.async(function train$(_context4) {
+        while (1) {
+          switch (_context4.prev = _context4.next) {
+            case 0:
               image = tf.fromPixels(this.webcam.canvas);
               logits = void 0;
               // 'conv_preds' is the logits activation of MobileNet.
@@ -180,19 +210,28 @@ var Main = function () {
               // Train class if one of the buttons is held down
 
 
-              if (this.training != -1) {
-                logits = infer();
+              logits = infer();
 
-                // Add current image to classifier
-                this.knn.addExample(logits, this.training);
+              // Add current image to classifier
+              this.knn.addExample(logits, i);
+
+              // The number of examples for each class
+              exampleCount = this.knn.getClassExampleCount();
+
+              // Update info text
+
+              if (exampleCount[i] > 0) {
+                this.infoTexts[i].innerText = ' ' + exampleCount[i] + ' examples ';
               }
 
-              // then call loop again
-              requestAnimationFrame(this.loop.bind(this));
+              image.dispose();
+              if (logits != null) {
+                logits.dispose();
+              }
 
-            case 6:
+            case 9:
             case 'end':
-              return _context3.stop();
+              return _context4.stop();
           }
         }
       }, null, this);
@@ -203,9 +242,9 @@ var Main = function () {
       var _this3 = this;
 
       var image, logits, infer, numClasses, res, i, exampleCount;
-      return regeneratorRuntime.async(function animate$(_context4) {
+      return regeneratorRuntime.async(function animate$(_context5) {
         while (1) {
-          switch (_context4.prev = _context4.next) {
+          switch (_context5.prev = _context5.next) {
             case 0:
               // Get image data from video element
               image = tf.fromPixels(webcam.canvas);
@@ -229,17 +268,17 @@ var Main = function () {
               numClasses = this.knn.getNumClasses();
 
               if (!(numClasses > 0)) {
-                _context4.next = 11;
+                _context5.next = 11;
                 break;
               }
 
               // If classes have been added run predict
               logits = infer();
-              _context4.next = 9;
+              _context5.next = 9;
               return regeneratorRuntime.awrap(this.knn.predictClass(logits, TOPK));
 
             case 9:
-              res = _context4.sent;
+              res = _context5.sent;
 
 
               for (i = 0; i < NUM_CLASSES; i++) {
@@ -271,7 +310,7 @@ var Main = function () {
 
             case 13:
             case 'end':
-              return _context4.stop();
+              return _context5.stop();
           }
         }
       }, null, this);
