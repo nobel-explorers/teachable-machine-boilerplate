@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import "@babel/polyfill";
-import * as mobilenetModule from '@tensorflow-models/mobilenet';
+import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
 import * as tmImage from '@teachablemachine/image';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
@@ -60,6 +60,9 @@ class Main {
     const predict = document.createElement('button');
     predict.innerText = "Predict";
     document.body.appendChild(predict);
+    this.predText = document.createElement('span')
+    predText.innerText = " No Prediction";
+    div.appendChild(predText);
 
 
     // Create training buttons and info texts    
@@ -91,7 +94,7 @@ class Main {
 
   async bindPage() {
     this.knn = knnClassifier.create();
-    this.mobilenet = await mobilenetModule.load();
+    this.mobilenet = await mobilenet.load();
 
   }
 
@@ -109,6 +112,16 @@ class Main {
     // update the webcam frame
     this.webcam.update();
     // Get image data from video element
+    if (this.training != -1) {
+      
+      await this.train(this.training);
+
+    }
+    // then call loop again
+    requestAnimationFrame(this.loop.bind(this));
+  }
+
+  async train(i){
     const image = tf.fromPixels(this.webcam.canvas);
 
     let logits;
@@ -116,16 +129,29 @@ class Main {
     const infer = () => this.mobilenet.infer(image, 'conv_preds');
 
     // Train class if one of the buttons is held down
-    if (this.training != -1) {
-      logits = infer();
+    logits = infer();
 
-      // Add current image to classifier
-      this.knn.addExample(logits, this.training)
+    // Add current image to classifier
+    this.knn.addExample(logits, i);
+
+  
+
+    // The number of examples for each class
+    const exampleCount = this.knn.getClassExampleCount();
+
+    // Update info text
+    if (exampleCount[i] > 0) {
+      this.infoTexts[i].innerText = ` ${exampleCount[i]} examples `
     }
+      
+    
+      image.dispose();
+      if (logits != null) {
+        logits.dispose();
+      }
 
-    // then call loop again
-    requestAnimationFrame(this.loop.bind(this));
   }
+
 
   async animate() {
       // Get image data from video element
