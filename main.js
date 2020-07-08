@@ -62,9 +62,10 @@ class Main {
     this.predButton = document.createElement('button');
     this.predButton.innerText = "Predict";
     this.predButton.disabled = true;
-    this.predButton.addEventListener("click", this.predict);
+    this.predButton.addEventListener("click", this.predict.bind(this));
     predDiv.appendChild(this.predButton);
-    
+
+    //prediction output    
     this.predText = document.createElement('span')
     this.predText.innerText = "No Prediction";
     predDiv.appendChild(this.predText);
@@ -138,8 +139,9 @@ class Main {
   }
 
   async train(i){
+
     const image = tf.fromPixels(this.webcam.canvas);
-    console.log(this.webcam);
+    
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.
     const infer = () => this.mobilenet.infer(image, 'conv_preds');
@@ -150,7 +152,6 @@ class Main {
     // Add current image to classifier
     this.knn.addExample(logits, i);
 
-  
 
     // The number of examples for each class
     const exampleCount = this.knn.getClassExampleCount();
@@ -160,7 +161,7 @@ class Main {
       this.infoTexts[i].innerText = ` ${exampleCount[i]} examples `
     }
       
-    
+    //dispose of the image and logits to free memory
       image.dispose();
       if (logits != null) {
         logits.dispose();
@@ -168,8 +169,8 @@ class Main {
 
   }
 
-  async predict() {
-    console.log(this.webcam);
+  async predict(){
+
     const image = tf.fromPixels(this.webcam.canvas);
 
     let logits;
@@ -183,11 +184,8 @@ class Main {
 
     for (let i = 0; i < NUM_CLASSES; i++) {
 
-      // Make the predicted class bold
-      if (res.classIndex == i) {
-        this.infoTexts[i].style.fontWeight = 'bold';
-      } else {
-        this.infoTexts[i].style.fontWeight = 'normal';
+      if (res.classIndex == i){
+        this.predText.innerText = "Class" + i;
       }
   
     }

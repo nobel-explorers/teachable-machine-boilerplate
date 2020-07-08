@@ -52,36 +52,44 @@ var Main = function () {
 
     // Initiate variables
     this.infoTexts = [];
+    this.buttons = [];
     this.training = -1; // -1 when no class is being trained
 
     // Initiate deeplearn.js math and knn classifier objects
     this.bindPage();
 
-    // this function from the tmImage library returns a video element that
-    // shows a video feed from the webcam
-    this.webcam = new tmImage.Webcam(200, 200, true); //width, height, flipped
-
-    this.webcamSetup();
-
-    var input = document.createElement('div');
-    document.body.appendChild(input);
+    //create div to contain the file input and webcam
+    this.inputDiv = document.createElement('div');
+    document.body.appendChild(this.inputDiv);
 
     // add the video element to the page
+    // this function from the tmImage library returns a video element that
+    // shows a video feed from the webcam
+    this.webcam = new tmImage.Webcam(200, 200, true); //width, height, flipped    
+    this.webcamSetup();
 
-
+    //initialize the file input element 
     this.imgUpload = document.createElement('input');
     this.imgUpload.setAttribute("type", "file");
     this.imgUpload.setAttribute("accept", "image/*");
 
     //add file input to DOM
-    input.appendChild(this.imgUpload);
+    this.inputDiv.appendChild(this.imgUpload);
 
-    var predict = document.createElement('button');
-    predict.innerText = "Predict";
-    document.body.appendChild(predict);
+    //instatiate div for predict button + output text
+    var predDiv = document.createElement('div');
+    document.body.appendChild(predDiv);
+
+    //instatiate predict button (disabled until model and  is running)
+    this.predButton = document.createElement('button');
+    this.predButton.innerText = "Predict";
+    this.predButton.disabled = true;
+    this.predButton.addEventListener("click", this.predict);
+    predDiv.appendChild(this.predButton);
+
     this.predText = document.createElement('span');
-    predText.innerText = " No Prediction";
-    div.appendChild(predText);
+    this.predText.innerText = "No Prediction";
+    predDiv.appendChild(this.predText);
 
     // Create training buttons and info texts    
 
@@ -93,7 +101,9 @@ var Main = function () {
       // Create training button
       var button = document.createElement('button');
       button.innerText = "Train " + i;
+      button.disabled = true;
       div.appendChild(button);
+      _this.buttons.push(button);
 
       // Listen for mouse events when clicking the button
       button.addEventListener('mousedown', function () {
@@ -122,6 +132,7 @@ var Main = function () {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
+
               this.knn = knnClassifier.create();
               _context.next = 3;
               return regeneratorRuntime.awrap(mobilenet.load());
@@ -129,7 +140,11 @@ var Main = function () {
             case 3:
               this.mobilenet = _context.sent;
 
-            case 4:
+              this.buttons.forEach(function (button) {
+                return button.disabled = false;
+              });
+
+            case 5:
             case 'end':
               return _context.stop();
           }
@@ -148,7 +163,7 @@ var Main = function () {
 
             case 2:
               // request access to the webcam
-              document.body.appendChild(this.webcam.canvas);
+              this.inputDiv.appendChild(this.webcam.canvas);
               this.webcam.play();
               requestAnimationFrame(this.loop.bind(this));
 
@@ -162,6 +177,7 @@ var Main = function () {
   }, {
     key: 'loop',
     value: function loop() {
+      var numClasses;
       return regeneratorRuntime.async(function loop$(_context3) {
         while (1) {
           switch (_context3.prev = _context3.next) {
@@ -179,10 +195,17 @@ var Main = function () {
               return regeneratorRuntime.awrap(this.train(this.training));
 
             case 4:
+              numClasses = this.knn.getNumClasses();
+
+
+              if (numClasses > 0) {
+                this.predButton.disabled = false;
+              }
+
               // then call loop again
               requestAnimationFrame(this.loop.bind(this));
 
-            case 5:
+            case 7:
             case 'end':
               return _context3.stop();
           }
@@ -200,6 +223,8 @@ var Main = function () {
           switch (_context4.prev = _context4.next) {
             case 0:
               image = tf.fromPixels(this.webcam.canvas);
+
+              console.log(this.webcam);
               logits = void 0;
               // 'conv_preds' is the logits activation of MobileNet.
 
@@ -229,7 +254,7 @@ var Main = function () {
                 logits.dispose();
               }
 
-            case 9:
+            case 10:
             case 'end':
               return _context4.stop();
           }
@@ -237,17 +262,17 @@ var Main = function () {
       }, null, this);
     }
   }, {
-    key: 'animate',
-    value: function animate() {
+    key: 'predict',
+    value: function predict() {
       var _this3 = this;
 
-      var image, logits, infer, numClasses, res, i, exampleCount;
-      return regeneratorRuntime.async(function animate$(_context5) {
+      var image, logits, infer, res, i;
+      return regeneratorRuntime.async(function predict$(_context5) {
         while (1) {
           switch (_context5.prev = _context5.next) {
             case 0:
-              // Get image data from video element
-              image = tf.fromPixels(webcam.canvas);
+              console.log(this.webcam);
+              image = tf.fromPixels(this.webcam.canvas);
               logits = void 0;
               // 'conv_preds' is the logits activation of MobileNet.
 
@@ -255,60 +280,33 @@ var Main = function () {
                 return _this3.mobilenet.infer(image, 'conv_preds');
               };
 
-              // Train class if one of the buttons is held down
-
-
-              if (this.training != -1) {
-                logits = infer();
-
-                // Add current image to classifier
-                this.knn.addExample(logits, this.training);
-              }
-
-              numClasses = this.knn.getNumClasses();
-
-              if (!(numClasses > 0)) {
-                _context5.next = 11;
-                break;
-              }
-
               // If classes have been added run predict
+
+
               logits = infer();
-              _context5.next = 9;
+              _context5.next = 7;
               return regeneratorRuntime.awrap(this.knn.predictClass(logits, TOPK));
 
-            case 9:
+            case 7:
               res = _context5.sent;
 
 
               for (i = 0; i < NUM_CLASSES; i++) {
 
-                // The number of examples for each class
-                exampleCount = this.knn.getClassExampleCount();
-
                 // Make the predicted class bold
-
                 if (res.classIndex == i) {
                   this.infoTexts[i].style.fontWeight = 'bold';
                 } else {
                   this.infoTexts[i].style.fontWeight = 'normal';
                 }
-
-                // Update info text
-                if (exampleCount[i] > 0) {
-                  this.infoTexts[i].innerText = ' ' + exampleCount[i] + ' examples - ' + res.confidences[i] * 100 + '%';
-                }
               }
-
-            case 11:
-
               // Dispose image when done
               image.dispose();
               if (logits != null) {
                 logits.dispose();
               }
 
-            case 13:
+            case 11:
             case 'end':
               return _context5.stop();
           }
