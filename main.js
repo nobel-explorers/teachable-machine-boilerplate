@@ -36,9 +36,8 @@ class Main {
     // Initiate deeplearn.js math and knn classifier objects
     this.bindPage();
 
-    //create div to contain the file input and webcam
-    this.inputDiv = document.createElement('div');
-    document.body.appendChild(this.inputDiv);
+    this.webcamDiv= document.createElement('div');
+    document.body.appendChild(this.webcamDiv);
     
     // add the video element to the page
     // this function from the tmImage library returns a video element that
@@ -46,24 +45,63 @@ class Main {
     this.webcam = new tmImage.Webcam(200, 200, true); //width, height, flipped    
     this.webcamSetup();
     
+    //create div to contain the file input and webcam
+    this.inputDiv = document.createElement('div');
+    document.body.appendChild(this.inputDiv);
+
     //initialize the file input element 
     this.imgUpload =document.createElement('input');
     this.imgUpload.setAttribute("type", "file");
     this.imgUpload.setAttribute("accept", "image/*");
+    this.imgUpload.multiple = true;
 
+    this.imgList = [];
+
+    this.imgUpload.addEventListener("change", this.upload.bind(this));
+    
     //add file input to DOM
     this.inputDiv.appendChild(this.imgUpload);
 
+
+    this.classSelection = [];
+
+    for(let i = 0; i < NUM_CLASSES; i++){
+
+      const radioID = "Class"+i;
+      
+      const radio = document.createElement('input');
+      radio.setAttribute("type", "radio");
+      radio.setAttribute("name", "class");
+      radio.setAttribute("id", radioID);
+      this.inputDiv.appendChild(radio);
+      this.classSelection.push(radio);
+
+      const radioLabel = document.createElement('label');
+      radioLabel.setAttribute("for",radioID);
+      radioLabel.innerText = radioID;
+      this.inputDiv.appendChild(radioLabel);
+
+
+    }
+
+    this.trainULButton = document.createElement('button');
+    this.trainULButton.innerText = "Train with Uploaded";
+
+    this.uploadedImages = document.createElement('div');
+    document.body.appendChild(this.uploadedImages);
+
+    this.trainULButton.addEventListener('click', this.trainUL.bind(this));
+    this.inputDiv.appendChild(this.trainULButton);
     //instatiate div for predict button + output text
     const predDiv = document.createElement('div');
     document.body.appendChild(predDiv);
 
-    //instatiate predict button (disabled until model and  is running)
-    this.predButton = document.createElement('button');
-    this.predButton.innerText = "Predict";
-    this.predButton.disabled = true;
-    this.predButton.addEventListener("click", this.predict.bind(this));
-    predDiv.appendChild(this.predButton);
+    //instatiate predict button for webcam (disabled until model and  is running)
+    this.predWC = document.createElement('button');
+    this.predWC.innerText = "Predict Webcam";
+    this.predWC.disabled = true;
+    this.predWC.addEventListener("click", this.predict.bind(this));
+    predDiv.appendChild(this.predWC);
 
     //prediction output    
     this.predText = document.createElement('span')
@@ -98,6 +136,55 @@ class Main {
 
   }
 
+  async trainUL(){
+
+     for(var i = 0; i < this.imgList.length; i++){
+        var img = this.imgList[i];
+        const imgEl = document.createElement('img');
+        imgEl.src = URL.createObjectURL(img);
+        imgEl.setAttribute("height",200);
+        imgEl.setAttribute("width",200);
+
+        var selectedClass = -1;
+        for(var i = 0; i < this.classSelection.length; i++){
+          if(this.classSelection[i].checked){
+              selectedClass = i;
+              break;
+          }
+        }
+
+        
+        await this.train(selectedClass,imgEl);
+       
+
+        //remove items from the DOM
+        
+
+      }
+
+     while(this.uploadedImages.firstChild){
+          this.uploadedImages.removeChild(this.uploadedImages.firstChild);
+        }
+
+  }
+
+  upload() {
+     this.imgList = [];
+      
+      for(var i = 0; i < this.imgUpload.files.length; i++){
+        this.imgList.push(this.imgUpload.files[i]);
+        const imgEl = document.createElement('img');
+        imgEl.src = URL.createObjectURL(this.imgUpload.files[i]);
+        imgEl.setAttribute("height", 50);
+        this.uploadedImages.appendChild(imgEl);
+
+      }
+    
+
+  }
+
+
+
   async bindPage() {
 
     this.knn = knnClassifier.create();
@@ -110,7 +197,7 @@ class Main {
   async webcamSetup(){
 
     await this.webcam.setup(); // request access to the webcam
-    this.inputDiv.appendChild(this.webcam.canvas);
+    this.webcamDiv.appendChild(this.webcam.canvas);
     this.webcam.play();
     requestAnimationFrame(this.loop.bind(this));
 
@@ -123,24 +210,25 @@ class Main {
     this.webcam.update();
     // Get image data from video element
     if (this.training != -1) {
-      
-      await this.train(this.training);
+      const image = tf.window.fromPixels(this.webcam.canvas);
+      console.log(image);
+      await this.train(this.training, image);
+      image.dispose();
 
     }
 
     const numClasses = this.knn.getNumClasses();
 
     if(numClasses > 0){
-      this.predButton.disabled=false;
+      this.predWC.disabled=false;
     }
 
     // then call loop again
     requestAnimationFrame(this.loop.bind(this));
   }
 
-  async train(i){
+  async train(i, image){
 
-    const image = tf.fromPixels(this.webcam.canvas);
     
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.
@@ -148,6 +236,7 @@ class Main {
 
     // Train class if one of the buttons is held down
     logits = infer();
+
 
     // Add current image to classifier
     this.knn.addExample(logits, i);
@@ -162,7 +251,7 @@ class Main {
     }
       
     //dispose of the image and logits to free memory
-      image.dispose();
+    
       if (logits != null) {
         logits.dispose();
       }
@@ -171,7 +260,7 @@ class Main {
 
   async predict(){
 
-    const image = tf.fromPixels(this.webcam.canvas);
+    const image = tf.window.fromPixels(this.webcam.canvas);
 
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.

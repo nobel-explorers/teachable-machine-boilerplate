@@ -45,281 +45,277 @@ var IMAGE_SIZE = 227;
 var TOPK = 10;
 
 var Main = function () {
-  function Main() {
-    var _this = this;
+    function Main() {
+        var _this = this;
 
-    _classCallCheck(this, Main);
+        _classCallCheck(this, Main);
 
-    // Initiate variables
-    this.infoTexts = [];
-    this.buttons = [];
-    this.training = -1; // -1 when no class is being trained
+        // Initiate variables
+        this.infoTexts = [];
+        this.buttons = [];
+        this.training = -1; // -1 when no class is being trained
 
-    // Initiate deeplearn.js math and knn classifier objects
-    this.bindPage();
+        // Initiate deeplearn.js math and knn classifier objects
+        this.bindPage();
 
-    //create div to contain the file input and webcam
-    this.inputDiv = document.createElement('div');
-    document.body.appendChild(this.inputDiv);
+        //create div to contain the file input and webcam
+        this.inputDiv = document.createElement('div');
+        document.body.appendChild(this.inputDiv);
 
-    // add the video element to the page
-    // this function from the tmImage library returns a video element that
-    // shows a video feed from the webcam
-    this.webcam = new tmImage.Webcam(200, 200, true); //width, height, flipped    
-    this.webcamSetup();
+        // add the video element to the page
+        // this function from the tmImage library returns a video element that
+        // shows a video feed from the webcam
+        this.webcam = new tmImage.Webcam(200, 200, true); //width, height, flipped    
+        this.webcamSetup();
 
-    //initialize the file input element 
-    this.imgUpload = document.createElement('input');
-    this.imgUpload.setAttribute("type", "file");
-    this.imgUpload.setAttribute("accept", "image/*");
+        //initialize the file input element 
+        this.imgUpload = document.createElement('input');
+        this.imgUpload.setAttribute("type", "file");
+        this.imgUpload.setAttribute("accept", "image/*");
 
-    //add file input to DOM
-    this.inputDiv.appendChild(this.imgUpload);
+        //add file input to DOM
+        this.inputDiv.appendChild(this.imgUpload);
 
-    //instatiate div for predict button + output text
-    var predDiv = document.createElement('div');
-    document.body.appendChild(predDiv);
+        //instatiate div for predict button + output text
+        var predDiv = document.createElement('div');
+        document.body.appendChild(predDiv);
 
-    //instatiate predict button (disabled until model and  is running)
-    this.predButton = document.createElement('button');
-    this.predButton.innerText = "Predict";
-    this.predButton.disabled = true;
-    this.predButton.addEventListener("click", this.predict);
-    predDiv.appendChild(this.predButton);
+        //instatiate predict button (disabled until model and  is running)
+        this.predButton = document.createElement('button');
+        this.predButton.innerText = "Predict";
+        this.predButton.disabled = true;
+        this.predButton.addEventListener("click", this.predict.bind(this));
+        predDiv.appendChild(this.predButton);
 
-    this.predText = document.createElement('span');
-    this.predText.innerText = "No Prediction";
-    predDiv.appendChild(this.predText);
+        //prediction output    
+        this.predText = document.createElement('span');
+        this.predText.innerText = "No Prediction";
+        predDiv.appendChild(this.predText);
 
-    // Create training buttons and info texts    
+        // Create training buttons and info texts    
 
-    var _loop = function _loop(i) {
-      var div = document.createElement('div');
-      document.body.appendChild(div);
-      div.style.marginBottom = '10px';
+        var _loop = function _loop(i) {
+            var div = document.createElement('div');
+            document.body.appendChild(div);
+            div.style.marginBottom = '10px';
 
-      // Create training button
-      var button = document.createElement('button');
-      button.innerText = "Train " + i;
-      button.disabled = true;
-      div.appendChild(button);
-      _this.buttons.push(button);
+            // Create training button
+            var button = document.createElement('button');
+            button.innerText = "Train " + i;
+            button.disabled = true;
+            div.appendChild(button);
+            _this.buttons.push(button);
 
-      // Listen for mouse events when clicking the button
-      button.addEventListener('mousedown', function () {
-        return _this.training = i;
-      });
-      button.addEventListener('mouseup', function () {
-        return _this.training = -1;
-      });
+            // Listen for mouse events when clicking the button
+            button.addEventListener('mousedown', function () {
+                return _this.training = i;
+            });
+            button.addEventListener('mouseup', function () {
+                return _this.training = -1;
+            });
 
-      // Create info text
-      var infoText = document.createElement('span');
-      infoText.innerText = " No examples added";
-      div.appendChild(infoText);
-      _this.infoTexts.push(infoText);
-    };
+            // Create info text
+            var infoText = document.createElement('span');
+            infoText.innerText = " No examples added";
+            div.appendChild(infoText);
+            _this.infoTexts.push(infoText);
+        };
 
-    for (var i = 0; i < NUM_CLASSES; i++) {
-      _loop(i);
-    }
-  }
-
-  _createClass(Main, [{
-    key: 'bindPage',
-    value: function bindPage() {
-      return regeneratorRuntime.async(function bindPage$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-
-              this.knn = knnClassifier.create();
-              _context.next = 3;
-              return regeneratorRuntime.awrap(mobilenet.load());
-
-            case 3:
-              this.mobilenet = _context.sent;
-
-              this.buttons.forEach(function (button) {
-                return button.disabled = false;
-              });
-
-            case 5:
-            case 'end':
-              return _context.stop();
-          }
+        for (var i = 0; i < NUM_CLASSES; i++) {
+            _loop(i);
         }
-      }, null, this);
     }
-  }, {
-    key: 'webcamSetup',
-    value: function webcamSetup() {
-      return regeneratorRuntime.async(function webcamSetup$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              _context2.next = 2;
-              return regeneratorRuntime.awrap(this.webcam.setup());
 
-            case 2:
-              // request access to the webcam
-              this.inputDiv.appendChild(this.webcam.canvas);
-              this.webcam.play();
-              requestAnimationFrame(this.loop.bind(this));
+    _createClass(Main, [{
+        key: 'bindPage',
+        value: function bindPage() {
+            return regeneratorRuntime.async(function bindPage$(_context) {
+                while (1) {
+                    switch (_context.prev = _context.next) {
+                        case 0:
 
-            case 5:
-            case 'end':
-              return _context2.stop();
-          }
-        }
-      }, null, this);
-    }
-  }, {
-    key: 'loop',
-    value: function loop() {
-      var numClasses;
-      return regeneratorRuntime.async(function loop$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              // update the webcam frame
-              this.webcam.update();
-              // Get image data from video element
+                            this.knn = knnClassifier.create();
+                            _context.next = 3;
+                            return regeneratorRuntime.awrap(mobilenet.load());
 
-              if (!(this.training != -1)) {
-                _context3.next = 4;
-                break;
-              }
+                        case 3:
+                            this.mobilenet = _context.sent;
 
-              _context3.next = 4;
-              return regeneratorRuntime.awrap(this.train(this.training));
+                            this.buttons.forEach(function (button) {
+                                return button.disabled = false;
+                            });
 
-            case 4:
-              numClasses = this.knn.getNumClasses();
-
-
-              if (numClasses > 0) {
-                this.predButton.disabled = false;
-              }
-
-              // then call loop again
-              requestAnimationFrame(this.loop.bind(this));
-
-            case 7:
-            case 'end':
-              return _context3.stop();
-          }
-        }
-      }, null, this);
-    }
-  }, {
-    key: 'train',
-    value: function train(i) {
-      var _this2 = this;
-
-      var image, logits, infer, exampleCount;
-      return regeneratorRuntime.async(function train$(_context4) {
-        while (1) {
-          switch (_context4.prev = _context4.next) {
-            case 0:
-              image = tf.fromPixels(this.webcam.canvas);
-
-              console.log(this.webcam);
-              logits = void 0;
-              // 'conv_preds' is the logits activation of MobileNet.
-
-              infer = function infer() {
-                return _this2.mobilenet.infer(image, 'conv_preds');
-              };
-
-              // Train class if one of the buttons is held down
-
-
-              logits = infer();
-
-              // Add current image to classifier
-              this.knn.addExample(logits, i);
-
-              // The number of examples for each class
-              exampleCount = this.knn.getClassExampleCount();
-
-              // Update info text
-
-              if (exampleCount[i] > 0) {
-                this.infoTexts[i].innerText = ' ' + exampleCount[i] + ' examples ';
-              }
-
-              image.dispose();
-              if (logits != null) {
-                logits.dispose();
-              }
-
-            case 10:
-            case 'end':
-              return _context4.stop();
-          }
-        }
-      }, null, this);
-    }
-  }, {
-    key: 'predict',
-    value: function predict() {
-      var _this3 = this;
-
-      var image, logits, infer, res, i;
-      return regeneratorRuntime.async(function predict$(_context5) {
-        while (1) {
-          switch (_context5.prev = _context5.next) {
-            case 0:
-              console.log(this.webcam);
-              image = tf.fromPixels(this.webcam.canvas);
-              logits = void 0;
-              // 'conv_preds' is the logits activation of MobileNet.
-
-              infer = function infer() {
-                return _this3.mobilenet.infer(image, 'conv_preds');
-              };
-
-              // If classes have been added run predict
-
-
-              logits = infer();
-              _context5.next = 7;
-              return regeneratorRuntime.awrap(this.knn.predictClass(logits, TOPK));
-
-            case 7:
-              res = _context5.sent;
-
-
-              for (i = 0; i < NUM_CLASSES; i++) {
-
-                // Make the predicted class bold
-                if (res.classIndex == i) {
-                  this.infoTexts[i].style.fontWeight = 'bold';
-                } else {
-                  this.infoTexts[i].style.fontWeight = 'normal';
+                        case 5:
+                        case 'end':
+                            return _context.stop();
+                    }
                 }
-              }
-              // Dispose image when done
-              image.dispose();
-              if (logits != null) {
-                logits.dispose();
-              }
-
-            case 11:
-            case 'end':
-              return _context5.stop();
-          }
+            }, null, this);
         }
-      }, null, this);
-    }
-  }]);
+    }, {
+        key: 'webcamSetup',
+        value: function webcamSetup() {
+            return regeneratorRuntime.async(function webcamSetup$(_context2) {
+                while (1) {
+                    switch (_context2.prev = _context2.next) {
+                        case 0:
+                            _context2.next = 2;
+                            return regeneratorRuntime.awrap(this.webcam.setup());
 
-  return Main;
+                        case 2:
+                            // request access to the webcam
+                            this.inputDiv.appendChild(this.webcam.canvas);
+                            this.webcam.play();
+                            requestAnimationFrame(this.loop.bind(this));
+
+                        case 5:
+                        case 'end':
+                            return _context2.stop();
+                    }
+                }
+            }, null, this);
+        }
+    }, {
+        key: 'loop',
+        value: function loop() {
+            var numClasses;
+            return regeneratorRuntime.async(function loop$(_context3) {
+                while (1) {
+                    switch (_context3.prev = _context3.next) {
+                        case 0:
+                            // update the webcam frame
+                            this.webcam.update();
+                            // Get image data from video element
+
+                            if (!(this.training != -1)) {
+                                _context3.next = 4;
+                                break;
+                            }
+
+                            _context3.next = 4;
+                            return regeneratorRuntime.awrap(this.train(this.training));
+
+                        case 4:
+                            numClasses = this.knn.getNumClasses();
+
+
+                            if (numClasses > 0) {
+                                this.predButton.disabled = false;
+                            }
+
+                            // then call loop again
+                            requestAnimationFrame(this.loop.bind(this));
+
+                        case 7:
+                        case 'end':
+                            return _context3.stop();
+                    }
+                }
+            }, null, this);
+        }
+    }, {
+        key: 'train',
+        value: function train(i) {
+            var _this2 = this;
+
+            var image, logits, infer, exampleCount;
+            return regeneratorRuntime.async(function train$(_context4) {
+                while (1) {
+                    switch (_context4.prev = _context4.next) {
+                        case 0:
+                            image = tf.fromPixels(this.webcam.canvas);
+                            logits = void 0;
+                            // 'conv_preds' is the logits activation of MobileNet.
+
+                            infer = function infer() {
+                                return _this2.mobilenet.infer(image, 'conv_preds');
+                            };
+
+                            // Train class if one of the buttons is held down
+
+
+                            logits = infer();
+
+                            // Add current image to classifier
+                            this.knn.addExample(logits, i);
+
+                            // The number of examples for each class
+                            exampleCount = this.knn.getClassExampleCount();
+
+                            // Update info text
+
+                            if (exampleCount[i] > 0) {
+                                this.infoTexts[i].innerText = ' ' + exampleCount[i] + ' examples ';
+                            }
+
+                            //dispose of the image and logits to free memory
+                            image.dispose();
+                            if (logits != null) {
+                                logits.dispose();
+                            }
+
+                        case 9:
+                        case 'end':
+                            return _context4.stop();
+                    }
+                }
+            }, null, this);
+        }
+    }, {
+        key: 'predict',
+        value: function predict() {
+            var _this3 = this;
+
+            var image, logits, infer, res, i;
+            return regeneratorRuntime.async(function predict$(_context5) {
+                while (1) {
+                    switch (_context5.prev = _context5.next) {
+                        case 0:
+                            image = tf.fromPixels(this.webcam.canvas);
+                            logits = void 0;
+                            // 'conv_preds' is the logits activation of MobileNet.
+
+                            infer = function infer() {
+                                return _this3.mobilenet.infer(image, 'conv_preds');
+                            };
+
+                            // If classes have been added run predict
+
+
+                            logits = infer();
+                            _context5.next = 6;
+                            return regeneratorRuntime.awrap(this.knn.predictClass(logits, TOPK));
+
+                        case 6:
+                            res = _context5.sent;
+
+
+                            for (i = 0; i < NUM_CLASSES; i++) {
+
+                                if (res.classIndex == i) {
+                                    this.predText.innerText = "Class" + i;
+                                }
+                            }
+                            // Dispose image when done
+                            image.dispose();
+                            if (logits != null) {
+                                logits.dispose();
+                            }
+
+                        case 10:
+                        case 'end':
+                            return _context5.stop();
+                    }
+                }
+            }, null, this);
+        }
+    }]);
+
+    return Main;
 }();
 
 window.addEventListener('load', function () {
-  return new Main();
+    return new Main();
 });
 
 },{"@babel/polyfill":2,"@teachablemachine/image":11,"@tensorflow-models/knn-classifier":17,"@tensorflow-models/mobilenet":20,"@tensorflow/tfjs":272}],2:[function(require,module,exports){
