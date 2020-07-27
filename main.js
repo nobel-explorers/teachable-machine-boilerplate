@@ -138,20 +138,20 @@ class Main {
 
   async trainUL(){
 
-     for(var i = 0; i < this.imgList.length; i++){
-        var img = this.imgList[i];
-        const imgEl = document.createElement('img');
-        imgEl.src = URL.createObjectURL(img);
-        imgEl.setAttribute("height",200);
-        imgEl.setAttribute("width",200);
-
-        var selectedClass = -1;
+    var selectedClass = -1;
         for(var i = 0; i < this.classSelection.length; i++){
           if(this.classSelection[i].checked){
               selectedClass = i;
               break;
           }
         }
+
+     for(var i = 0; i < this.imgList.length; i++){
+        var img = this.imgList[i];
+        let imgEl = document.createElement('img');
+        imgEl.src = URL.createObjectURL(img);
+        imgEl.setAttribute("height",200);
+        imgEl.setAttribute("width",200);
 
         
         await this.train(selectedClass,imgEl);
@@ -210,10 +210,10 @@ class Main {
     this.webcam.update();
     // Get image data from video element
     if (this.training != -1) {
-      const image = tf.window.fromPixels(this.webcam.canvas);
-      console.log(image);
+
+      const image = this.webcam.canvas;
       await this.train(this.training, image);
-      image.dispose();
+      
 
     }
 
@@ -229,7 +229,9 @@ class Main {
 
   async train(i, image){
 
-    
+    console.log(image);
+    image = tf.browser.fromPixels(image);
+    console.log(image);
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.
     const infer = () => this.mobilenet.infer(image, 'conv_preds');
@@ -251,7 +253,7 @@ class Main {
     }
       
     //dispose of the image and logits to free memory
-    
+    image.dispose()
       if (logits != null) {
         logits.dispose();
       }
@@ -260,7 +262,7 @@ class Main {
 
   async predict(){
 
-    const image = tf.window.fromPixels(this.webcam.canvas);
+    const image = tf.browser.fromPixels(this.webcam.canvas);
 
     let logits;
     // 'conv_preds' is the logits activation of MobileNet.
